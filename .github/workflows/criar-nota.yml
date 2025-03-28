@@ -10,8 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clonar o repositório público
+      - name: Clonar o repositório público com histórico completo
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Traz todo o histórico de commits
 
       - name: Criar nota Markdown com diffs
         run: |
@@ -24,25 +26,24 @@ jobs:
           echo "- **Data do Commit:** $(git log -1 --pretty=format:'%cd')" >> $NOTE_FILE
           echo "### Diferenças do Commit:" >> $NOTE_FILE
 
-          # Verifica se HEAD^ existe antes de gerar diffs
-          if git rev-parse --verify HEAD^ > /dev/null 2>&1; then
-            git diff-tree -r --no-commit-id --name-only HEAD | while read filename; do
-              echo "```diff" >> $NOTE_FILE
-              if git diff -p HEAD^ HEAD -- "$filename" > diff.txt 2>&1; then
-                if [ -s diff.txt ]; then # Verifica se o diff não está vazio
-                  cat diff.txt >> $NOTE_FILE
-                fi
-                rm diff.txt
-              fi
-              echo "```" >> $NOTE_FILE
-            done
+          # Verifica se há commits suficientes para calcular um diff
+          if [ $(git rev-list --count HEAD) -gt 1 ]; then
+            git diff HEAD^ HEAD --color=never > diff.txt
+            if [ -s diff.txt ]; then
+              echo '```diff' >> $NOTE_FILE
+              cat diff.txt >> $NOTE_FILE
+              echo '```' >> $NOTE_FILE
+            else
+              echo "Nenhuma diferença detectada." >> $NOTE_FILE
+            fi
+            rm diff.txt
           else
             echo "Commit inicial, sem diffs." >> $NOTE_FILE
           fi
 
       - name: Clonar o repositório privado e enviar nota
         run: |
-          # Tenta clonar o repositório privado com tratamento de erros
+          # Clona o repositório privado com token de acesso
           if ! git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/hugosousa42/Zettelkasten.git; then
             echo "Falha ao clonar o repositório privado."
             exit 1
@@ -62,7 +63,7 @@ jobs:
             exit 0
           fi
 
-          # Tenta fazer commit e push com tratamento de erros
+          # Faz commit e push
           if ! git commit -m "Adicionando nova nota automática"; then
             echo "Falha ao fazer commit."
             exit 1
