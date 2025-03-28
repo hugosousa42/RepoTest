@@ -22,23 +22,24 @@ jobs:
           NOTE_FILE="note-$TIMESTAMP.md"
 
           # Cabeçalho da nota com nome do repositório
-          echo "## ($REPO_NAME) Update $TIMESTAMP" > $NOTE_FILE
+          echo "$REPO_NAME $TIMESTAMP" > $NOTE_FILE
           echo "" >> $NOTE_FILE # Linha em branco
 
           # Informações do commit
-          echo "- **Autor:** $(git log -1 --pretty=format:'%an')" >> $NOTE_FILE
-          echo "- **Mensagem:** $(git log -1 --pretty=format:'%s')" >> $NOTE_FILE
-          echo "- **Commit:** [$(git log -1 --pretty=format:'%H')]($(git config --get remote.origin.url | sed 's/\.git$//' | sed 's/^git@/https:\/\//g' | sed 's/:/\//g')/commit/$(git log -1 --pretty=format:'%H'))" >> $NOTE_FILE
-          echo "- **Data do Commit:** $(git log -1 --pretty=format:'%cd')" >> $NOTE_FILE
+          echo "**Autor:** $(git log -1 --pretty=format:'%an')" >> $NOTE_FILE
+          echo "**Mensagem:** $(git log -1 --pretty=format:'%s')" >> $NOTE_FILE
+          echo "**Data do Commit:** $(git log -1 --pretty=format:'%cd' | awk '{print $4, $2, $3, $5}')" >> $NOTE_FILE
+          echo "**Commit:** [Link do Commit](https://github.com/hugosousa42/RepoTest/commit/$(git log -1 --pretty=format:'%H'))" >> $NOTE_FILE
+          echo "**Files nesse commit:** [Link dos Files](https://github.com/hugosousa42/RepoTest/tree/$(git log -1 --pretty=format:'%H'))" >> $NOTE_FILE
+          echo "**Branch:** $(git branch --show-current)" >> $NOTE_FILE
 
           # Informações adicionais
           ADDED_LINES=$(git diff --stat HEAD^ HEAD | grep -o '^+.*' | wc -l)
           REMOVED_LINES=$(git diff --stat HEAD^ HEAD | grep -o '^-.*' | wc -l)
           MODIFIED_FILES=$(git diff --name-only HEAD^ HEAD | wc -l)
-          echo "- **Branch:** $(git branch --show-current)" >> $NOTE_FILE
-          echo "- **Linhas Adicionadas:** $ADDED_LINES" >> $NOTE_FILE
-          echo "- **Linhas Removidas:** $REMOVED_LINES" >> $NOTE_FILE
-          echo "- **Arquivos Modificados:** $MODIFIED_FILES" >> $NOTE_FILE
+          echo "**Linhas Adicionadas:** $ADDED_LINES" >> $NOTE_FILE
+          echo "**Linhas Removidas:** $REMOVED_LINES" >> $NOTE_FILE
+          echo "**Arquivos Modificados:** $MODIFIED_FILES" >> $NOTE_FILE
 
           echo "### Diferenças do Commit:" >> $NOTE_FILE
 
