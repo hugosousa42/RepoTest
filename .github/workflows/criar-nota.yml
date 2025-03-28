@@ -22,39 +22,39 @@ jobs:
           NOTE_FILE="$REPO_NAME $TIMESTAMP.md" # Nome do arquivo com REPO_NAME e TIMESTAMP
 
           # Conteúdo da nota
-          echo "" >> $NOTE_FILE # Linha em branco
+          echo "" >> "$NOTE_FILE" # Linha em branco
 
           # Informações do commit
-          echo "**Autor:** $(git log -1 --pretty=format:'%an')" >> $NOTE_FILE
-          echo "**Mensagem:** $(git log -1 --pretty=format:'%s')" >> $NOTE_FILE
-          echo "**Data do Commit:** $(git log -1 --pretty=format:'%cd' | awk '{print $4, $2, $3, $5}')" >> $NOTE_FILE
-          echo "**Commit:** [Link do Commit](https://github.com/hugosousa42/RepoTest/commit/$(git log -1 --pretty=format:'%H'))" >> $NOTE_FILE
-          echo "**Files nesse commit:** [Link dos Files](https://github.com/hugosousa42/RepoTest/tree/$(git log -1 --pretty=format:'%H'))" >> $NOTE_FILE
-          echo "**Branch:** $(git branch --show-current)" >> $NOTE_FILE
+          echo "**Autor:** $(git log -1 --pretty=format:'%an')" >> "$NOTE_FILE"
+          echo "**Mensagem:** $(git log -1 --pretty=format:'%s')" >> "$NOTE_FILE"
+          echo "**Data do Commit:** $(git log -1 --pretty=format:'%cd' | awk '{print $4, $2, $3, $5}')" >> "$NOTE_FILE"
+          echo "**Commit:** [Link do Commit](https://github.com/hugosousa42/RepoTest/commit/$(git log -1 --pretty=format:'%H'))" >> "$NOTE_FILE"
+          echo "**Files nesse commit:** [Link dos Files](https://github.com/hugosousa42/RepoTest/tree/$(git log -1 --pretty=format:'%H'))" >> "$NOTE_FILE"
+          echo "**Branch:** $(git branch --show-current)" >> "$NOTE_FILE"
 
           # Informações adicionais
           ADDED_LINES=$(git diff --stat HEAD^ HEAD | grep -o '^+.*' | wc -l)
           REMOVED_LINES=$(git diff --stat HEAD^ HEAD | grep -o '^-.*' | wc -l)
           MODIFIED_FILES=$(git diff --name-only HEAD^ HEAD | wc -l)
-          echo "**Linhas Adicionadas:** $ADDED_LINES" >> $NOTE_FILE
-          echo "**Linhas Removidas:** $REMOVED_LINES" >> $NOTE_FILE
-          echo "**Arquivos Modificados:** $MODIFIED_FILES" >> $NOTE_FILE
+          echo "**Linhas Adicionadas:** $ADDED_LINES" >> "$NOTE_FILE"
+          echo "**Linhas Removidas:** $REMOVED_LINES" >> "$NOTE_FILE"
+          echo "**Arquivos Modificados:** $MODIFIED_FILES" >> "$NOTE_FILE"
 
-          echo "### Diferenças do Commit:" >> $NOTE_FILE
+          echo "### Diferenças do Commit:" >> "$NOTE_FILE"
 
           # Gerar diffs separados e ordenados alfabeticamente
           if [ $(git rev-list --count HEAD) -gt 1 ]; then
             git diff-tree -r HEAD^ HEAD --no-commit-id --name-only | sort | while read -r file; do
               if [ -f "$file" ]; then
-                echo "" >> $NOTE_FILE
-                echo "#### Diff para \`$file\`:" >> $NOTE_FILE
-                echo '```diff' >> $NOTE_FILE
-                git diff HEAD^ HEAD -- "$file" >> $NOTE_FILE
-                echo '```' >> $NOTE_FILE
+                echo "" >> "$NOTE_FILE"
+                echo "#### Diff para \`$file\`:" >> "$NOTE_FILE"
+                echo '```diff' >> "$NOTE_FILE"
+                git diff HEAD^ HEAD -- "$file" >> "$NOTE_FILE"
+                echo '```' >> "$NOTE_FILE"
               fi
             done
           else
-            echo "Commit inicial, sem diffs." >> $NOTE_FILE
+            echo "Commit inicial, sem diffs." >> "$NOTE_FILE"
           fi
 
       - name: Clonar o repositório privado e enviar nota
