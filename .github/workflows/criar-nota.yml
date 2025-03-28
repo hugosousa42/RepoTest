@@ -20,7 +20,7 @@ jobs:
           echo "## Nova atualização em $TIMESTAMP" > $NOTE_FILE
           echo "- **Autor:** $(git log -1 --pretty=format:'%an')" >> $NOTE_FILE
           echo "- **Mensagem:** $(git log -1 --pretty=format:'%s')" >> $NOTE_FILE
-          echo "- **Commit:** [$(git log -1 --pretty=format:'%H')](https://github.com/hugosousa42/Zettelkasten/commit/$(git log -1 --pretty=format:'%H'))" >> $NOTE_FILE
+          echo "- **Commit:** [$(git log -1 --pretty=format:'%H')](https://github.com/hugosousa42/RepoTest/commit/$(git log -1 --pretty=format:'%H'))" >> $NOTE_FILE
           echo "- **Data do Commit:** $(git log -1 --pretty=format:'%cd')" >> $NOTE_FILE
           echo "### Diferenças do Commit:" >> $NOTE_FILE
 
@@ -72,3 +72,8 @@ jobs:
             echo "Falha ao fazer push."
             exit 1
           fi
+
+      - name: Limpar ambiente
+        run: |
+          rm -rf Zettelkasten
+          rm -rf note-*.md
