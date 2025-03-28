@@ -13,7 +13,7 @@ jobs:
       - name: Clonar o repositório público
         uses: actions/checkout@v3
 
-      - name: Criar nota Markdown
+      - name: Criar nota Markdown com diffs
         run: |
           TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
           NOTE_FILE="note-$TIMESTAMP.md"
@@ -23,15 +23,31 @@ jobs:
           echo "- **Commit:** [$(git log -1 --pretty=format:'%H')](https://github.com/hugosousa42/Zettelkasten/commit/$(git log -1 --pretty=format:'%H'))" >> $NOTE_FILE
           echo "- **Data do Commit:** $(git log -1 --pretty=format:'%cd')" >> $NOTE_FILE
           echo "### Diferenças do Commit:" >> $NOTE_FILE
-          git diff-tree -r --no-commit-id --name-only HEAD | while read filename; do
-            echo "```diff" >> $NOTE_FILE
-            git diff -p HEAD^ HEAD -- "$filename" >> $NOTE_FILE
-            echo "```" >> $NOTE_FILE
-          done
+
+          # Verifica se HEAD^ existe antes de gerar diffs
+          if git rev-parse --verify HEAD^ > /dev/null 2>&1; then
+            git diff-tree -r --no-commit-id --name-only HEAD | while read filename; do
+              echo "```diff" >> $NOTE_FILE
+              if git diff -p HEAD^ HEAD -- "$filename" > diff.txt 2>&1; then
+                if [ -s diff.txt ]; then # Verifica se o diff não está vazio
+                  cat diff.txt >> $NOTE_FILE
+                fi
+                rm diff.txt
+              fi
+              echo "```" >> $NOTE_FILE
+            done
+          else
+            echo "Commit inicial, sem diffs." >> $NOTE_FILE
+          fi
 
       - name: Clonar o repositório privado e enviar nota
         run: |
-          git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/hugosousa42/Zettelkasten.git
+          # Tenta clonar o repositório privado com tratamento de erros
+          if ! git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/hugosousa42/Zettelkasten.git; then
+            echo "Falha ao clonar o repositório privado."
+            exit 1
+          fi
+
           cd Zettelkasten
           mv ../note-*.md .
 
@@ -46,5 +62,13 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Adicionando nova nota automática"
-          git push
+          # Tenta fazer commit e push com tratamento de erros
+          if ! git commit -m "Adicionando nova nota automática"; then
+            echo "Falha ao fazer commit."
+            exit 1
+          fi
+
+          if ! git push; then
+            echo "Falha ao fazer push."
+            exit 1
+          fi
