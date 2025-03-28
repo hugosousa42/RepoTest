@@ -1,11 +1,14 @@
 name: Criar nota e enviar para repo privado
+
 on:
   push:
     branches:
       - main
+
 jobs:
   generate_note:
     runs-on: ubuntu-latest
+
     steps:
       - name: Clonar o repositório público com histórico completo
         uses: actions/checkout@v3
@@ -15,21 +18,33 @@ jobs:
       - name: Preparar notas de diff
         run: |
           TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
+          REPO_NAME=$(basename $(git config --get remote.origin.url | sed 's/\.git$//'))
           NOTE_FILE="note-$TIMESTAMP.md"
-          
-          # Cabeçalho da nota
-          echo "## Nova atualização em $TIMESTAMP" > $NOTE_FILE
+
+          # Cabeçalho da nota com nome do repositório
+          echo "## ($REPO_NAME) Update $TIMESTAMP" > $NOTE_FILE
+          echo "" >> $NOTE_FILE # Linha em branco
+
+          # Informações do commit
           echo "- **Autor:** $(git log -1 --pretty=format:'%an')" >> $NOTE_FILE
           echo "- **Mensagem:** $(git log -1 --pretty=format:'%s')" >> $NOTE_FILE
           echo "- **Commit:** [$(git log -1 --pretty=format:'%H')]($(git config --get remote.origin.url | sed 's/\.git$//' | sed 's/^git@/https:\/\//g' | sed 's/:/\//g')/commit/$(git log -1 --pretty=format:'%H'))" >> $NOTE_FILE
           echo "- **Data do Commit:** $(git log -1 --pretty=format:'%cd')" >> $NOTE_FILE
+
+          # Informações adicionais
+          ADDED_LINES=$(git diff --stat HEAD^ HEAD | grep -o '^+.*' | wc -l)
+          REMOVED_LINES=$(git diff --stat HEAD^ HEAD | grep -o '^-.*' | wc -l)
+          MODIFIED_FILES=$(git diff --name-only HEAD^ HEAD | wc -l)
+          echo "- **Branch:** $(git branch --show-current)" >> $NOTE_FILE
+          echo "- **Linhas Adicionadas:** $ADDED_LINES" >> $NOTE_FILE
+          echo "- **Linhas Removidas:** $REMOVED_LINES" >> $NOTE_FILE
+          echo "- **Arquivos Modificados:** $MODIFIED_FILES" >> $NOTE_FILE
+
           echo "### Diferenças do Commit:" >> $NOTE_FILE
 
           # Gerar diffs separados e ordenados alfabeticamente
           if [ $(git rev-list --count HEAD) -gt 1 ]; then
-            # Usar git diff-tree para pegar todos os arquivos modificados
             git diff-tree -r HEAD^ HEAD --no-commit-id --name-only | sort | while read -r file; do
-              # Verificar se o arquivo ainda existe
               if [ -f "$file" ]; then
                 echo "" >> $NOTE_FILE
                 echo "#### Diff para \`$file\`:" >> $NOTE_FILE
@@ -51,28 +66,28 @@ jobs:
             echo "Falha ao clonar o repositório privado."
             exit 1
           fi
-          
+
           # Extrair o nome do diretório do repositório privado
           PRIVATE_REPO_DIR=$(basename $PRIVATE_REPO_URL)
           cd "$PRIVATE_REPO_DIR"
-          
+
           mv ../note-*.md .
           git config --global user.email "bot@github.com"
           git config --global user.name "GitHub Actions Bot"
           git add .
-          
+
           # Evita erro caso não haja mudanças
           if git diff --staged --quiet; then
             echo "Nenhuma mudança detectada. Pulando commit."
             exit 0
           fi
-          
+
           # Faz commit e push
           if ! git commit -m "Adicionando nova nota automática"; then
             echo "Falha ao fazer commit."
             exit 1
           fi
-          
+
           if ! git push; then
             echo "Falha ao fazer push."
             exit 1
