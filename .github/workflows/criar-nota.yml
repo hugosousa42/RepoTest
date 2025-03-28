@@ -20,7 +20,14 @@ jobs:
           echo "## Nova atualização em $TIMESTAMP" > $NOTE_FILE
           echo "- **Autor:** $(git log -1 --pretty=format:'%an')" >> $NOTE_FILE
           echo "- **Mensagem:** $(git log -1 --pretty=format:'%s')" >> $NOTE_FILE
-          echo "- **Commit:** $(git log -1 --pretty=format:'%H')" >> $NOTE_FILE
+          echo "- **Commit:** [$(git log -1 --pretty=format:'%H')](https://github.com/hugosousa42/Zettelkasten/commit/$(git log -1 --pretty=format:'%H'))" >> $NOTE_FILE
+          echo "- **Data do Commit:** $(git log -1 --pretty=format:'%cd')" >> $NOTE_FILE
+          echo "### Diferenças do Commit:" >> $NOTE_FILE
+          git diff-tree -r --no-commit-id --name-only HEAD | while read filename; do
+            echo "```diff" >> $NOTE_FILE
+            git diff -p HEAD^ HEAD -- "$filename" >> $NOTE_FILE
+            echo "```" >> $NOTE_FILE
+          done
 
       - name: Clonar o repositório privado e enviar nota
         run: |
