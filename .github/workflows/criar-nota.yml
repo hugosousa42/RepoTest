@@ -22,17 +22,17 @@ jobs:
           echo "- **Mensagem:** $(git log -1 --pretty=format:'%s')" >> $NOTE_FILE
           echo "- **Commit:** $(git log -1 --pretty=format:'%H')" >> $NOTE_FILE
 
-      - name: Clonar o repositório privado
+      - name: Clonar o repositório privado e enviar nota
         run: |
           git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/hugosousa42/Zettelkasten.git
           cd Zettelkasten
           mv ../note-*.md .
-          
+
           git config --global user.email "bot@github.com"
           git config --global user.name "GitHub Actions Bot"
-          
+
           git add .
-          
+
           # Evita erro caso não haja mudanças
           if git diff --staged --quiet; then
             echo "Nenhuma mudança detectada. Pulando commit."
