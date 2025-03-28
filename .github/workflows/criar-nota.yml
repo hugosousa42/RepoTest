@@ -19,10 +19,9 @@ jobs:
         run: |
           TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
           REPO_NAME=$(basename $(git config --get remote.origin.url | sed 's/\.git$//'))
-          NOTE_FILE="note-$TIMESTAMP.md"
+          NOTE_FILE="$REPO_NAME $TIMESTAMP.md" # Nome do arquivo com REPO_NAME e TIMESTAMP
 
-          # Cabeçalho da nota com nome do repositório
-          echo "$REPO_NAME $TIMESTAMP" > $NOTE_FILE
+          # Conteúdo da nota
           echo "" >> $NOTE_FILE # Linha em branco
 
           # Informações do commit
@@ -72,7 +71,7 @@ jobs:
           PRIVATE_REPO_DIR=$(basename $PRIVATE_REPO_URL)
           cd "$PRIVATE_REPO_DIR"
 
-          mv ../note-*.md .
+          mv "../$REPO_NAME $TIMESTAMP.md" . # Move o arquivo com o nome correto
           git config --global user.email "bot@github.com"
           git config --global user.name "GitHub Actions Bot"
           git add .
@@ -96,4 +95,4 @@ jobs:
 
       - name: Limpar ambiente
         run: |
-          rm -rf note-*.md
+          rm -rf "$REPO_NAME $TIMESTAMP.md" # Remove o arquivo com o nome correto
