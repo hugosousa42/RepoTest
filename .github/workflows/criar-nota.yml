@@ -71,7 +71,7 @@ jobs:
           PRIVATE_REPO_DIR=$(basename $PRIVATE_REPO_URL)
           cd "$PRIVATE_REPO_DIR"
 
-          mv "../$REPO_NAME $TIMESTAMP.md" . # Move o arquivo com o nome correto
+          mv "../$NOTE_FILE" . # Move o arquivo com o nome correto
           git config --global user.email "bot@github.com"
           git config --global user.name "GitHub Actions Bot"
           git add .
@@ -95,4 +95,4 @@ jobs:
 
       - name: Limpar ambiente
         run: |
-          rm -rf "$REPO_NAME $TIMESTAMP.md" # Remove o arquivo com o nome correto
+          rm -rf "$NOTE_FILE" # Remove o arquivo com o nome correto
