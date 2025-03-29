@@ -19,6 +19,7 @@ jobs:
           REPO_NAME=$(basename $(git config --get remote.origin.url | sed 's/\.git$//'))
           NOTE_FILE="${REPO_NAME} ${TIMESTAMP}.md" # Nome do arquivo com REPO_NAME e TIMESTAMP
           echo "note_file=${NOTE_FILE}" >> $GITHUB_OUTPUT
+          echo "repo_name=${REPO_NAME}" >> $GITHUB_OUTPUT
           
           # Conteúdo da nota
           echo "" >> "${NOTE_FILE}" # Linha em branco
@@ -58,8 +59,10 @@ jobs:
         env:
           PRIVATE_REPO_URL: ${{ secrets.PRIVATE_REPO_URL }}
         run: |
-          # Obter nome do arquivo
+          # Obter nome do arquivo e repo
           NOTE_FILE="${{ steps.prepare_note.outputs.note_file }}"
+          REPO_NAME="${{ steps.prepare_note.outputs.repo_name }}"
+          LOG_FILE="${REPO_NAME} logs.md"
           
           # Clona o repositório privado com token de acesso
           if ! git clone https://x-access-token:${{ secrets.GH_PAT }}@$PRIVATE_REPO_URL.git; then
@@ -71,7 +74,29 @@ jobs:
           PRIVATE_REPO_DIR=$(basename $PRIVATE_REPO_URL)
           cd "$PRIVATE_REPO_DIR"
           
-          mv "../${NOTE_FILE}" . # Move o arquivo com o nome correto
+          # Move o arquivo de nota para o repo privado
+          mv "../${NOTE_FILE}" .
+          
+          # Criar ou atualizar arquivo de log principal
+          if [ -f "$LOG_FILE" ]; then
+            # Arquivo de log existe - inserir nova entrada no topo
+            TEMP_FILE="temp_log.md"
+            echo "# ${REPO_NAME} - Log de Commits" > "$TEMP_FILE"
+            echo "" >> "$TEMP_FILE"
+            echo "- [[${NOTE_FILE}]] - $(date +'%Y-%m-%d %H:%M:%S') - $(git log -1 --pretty=format:'%s')" >> "$TEMP_FILE"
+            echo "" >> "$TEMP_FILE"
+            # Adicionar conteúdo existente ao arquivo temporário (pular as primeiras 3 linhas: título e linha em branco)
+            tail -n +3 "$LOG_FILE" >> "$TEMP_FILE"
+            # Substituir arquivo antigo pelo novo
+            mv "$TEMP_FILE" "$LOG_FILE"
+          else
+            # Criar arquivo de log pela primeira vez
+            echo "# ${REPO_NAME} - Log de Commits" > "$LOG_FILE"
+            echo "" >> "$LOG_FILE"
+            echo "- [[${NOTE_FILE}]] - $(date +'%Y-%m-%d %H:%M:%S') - $(git log -1 --pretty=format:'%s')" >> "$LOG_FILE"
+          fi
+          
+          # Configurar git e fazer commit
           git config --global user.email "bot@github.com"
           git config --global user.name "GitHub Actions Bot"
           git add .
@@ -83,7 +108,7 @@ jobs:
           fi
           
           # Faz commit e push
-          if ! git commit -m "Adicionando nova nota automática"; then
+          if ! git commit -m "Adicionando nota automática e atualizando log"; then
             echo "Falha ao fazer commit."
             exit 1
           fi
