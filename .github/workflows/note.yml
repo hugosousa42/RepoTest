@@ -90,7 +90,7 @@ jobs:
             TEMP_FILE="temp_log.md"
             echo "# ${REPO_NAME} - Log de Commits" > "$TEMP_FILE"
             echo "" >> "$TEMP_FILE"
-            echo "- [[${NOTE_FILE}]] - $(date +'%Y-%m-%d %H:%M:%S') - $(git log -1 --pretty=format:'%s')" >> "$TEMP_FILE"
+            echo "- [[${NOTE_FILE}]] - $(date +'%Y-%m-%d %H:%M:%S') - ${{ env.commit_message }}" >> "$TEMP_FILE"
             echo "" >> "$TEMP_FILE"
             # Adicionar conteúdo existente ao arquivo temporário (pular as primeiras 3 linhas: título e linha em branco)
             tail -n +3 "$LOG_FILE" >> "$TEMP_FILE"
@@ -100,7 +100,7 @@ jobs:
             # Criar arquivo de log pela primeira vez
             echo "# ${REPO_NAME} - Log de Commits" > "$LOG_FILE"
             echo "" >> "$LOG_FILE"
-            echo "- [[${NOTE_FILE}]] - $(date +'%Y-%m-%d %H:%M:%S') - $(git log -1 --pretty=format:'%s')" >> "$LOG_FILE"
+            echo "- [[${NOTE_FILE}]] - $(date +'%Y-%m-%d %H:%M:%S') - ${{ env.commit_message }}" >> "$LOG_FILE"
           fi
           
           # Configurar git e fazer commit
