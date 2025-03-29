@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+
 jobs:
   generate_note:
     runs-on: ubuntu-latest
@@ -21,11 +22,14 @@ jobs:
           echo "note_file=${NOTE_FILE}" >> $GITHUB_OUTPUT
           echo "repo_name=${REPO_NAME}" >> $GITHUB_OUTPUT
           
-          # Conteúdo da nota
+          # Pegando a mensagem original do commit
+          COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')
+          echo "commit_message=${COMMIT_MESSAGE}" >> $GITHUB_ENV
+          
+          # Criando a nota
           echo "" >> "${NOTE_FILE}" # Linha em branco
-          # Informações do commit
           echo "**Autor:** $(git log -1 --pretty=format:'%an')" >> "${NOTE_FILE}"
-          echo "**Mensagem:** $(git log -1 --pretty=format:'%s')" >> "${NOTE_FILE}"
+          echo "**Mensagem:** ${COMMIT_MESSAGE}" >> "${NOTE_FILE}"
           echo "**Data do Commit:** $(git log -1 --pretty=format:'%cd' | awk '{print $4, $2, $3, $5}')" >> "${NOTE_FILE}"
           echo "**Commit:** [Link do Commit](https://github.com/hugosousa42/RepoTest/commit/$(git log -1 --pretty=format:'%H'))" >> "${NOTE_FILE}"
           echo "**Files nesse commit:** [Link dos Files](https://github.com/hugosousa42/RepoTest/tree/$(git log -1 --pretty=format:'%H'))" >> "${NOTE_FILE}"
@@ -54,6 +58,9 @@ jobs:
           else
             echo "Commit inicial, sem diffs." >> "${NOTE_FILE}"
           fi
+          
+          # Adicionando espaço e seções finais
+          echo -e "\n\n### Comentários\n\n### Referências\n" >> "${NOTE_FILE}"
           
       - name: Clonar o repositório privado e enviar nota
         env:
@@ -107,8 +114,8 @@ jobs:
             exit 0
           fi
           
-          # Faz commit e push
-          if ! git commit -m "Adicionando nota automática e atualizando log"; then
+          # Faz commit e push com a mensagem original do commit
+          if ! git commit -m "${{ env.commit_message }}"; then
             echo "Falha ao fazer commit."
             exit 1
           fi
