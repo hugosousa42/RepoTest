@@ -1,11 +1,3 @@
 # RepoTest
 
-this is a test
-teste teste
-
-
-
-olfbhsdoufhsdofuhds
-
-
-some more tests
+This repo was made to test some workflows.
